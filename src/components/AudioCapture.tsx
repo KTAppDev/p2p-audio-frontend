@@ -1,5 +1,6 @@
 "use client";
 
+import getBrowser from "@/lib/detectBrowser";
 import React, { useEffect, useRef, useState } from "react";
 import {
   CardTitle,
@@ -12,6 +13,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 interface AudioCaptureProps {}
+
+let mimeType = "";
+switch (getBrowser()) {
+  case "Firefox":
+    mimeType = "audio/webm; codecs=opus";
+    break;
+  case "Chrome":
+    mimeType = "audio/webm; codecs=opus";
+    break;
+  // case "Safari":
+  //   mimeType = "audio/mp4; codecs=mp4a.40.2";
+  //   break;
+  default:
+    mimeType = "audio/webm; codecs=opus"; // Default to Opus
+}
 
 const AudioCapture: React.FC<AudioCaptureProps> = () => {
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
@@ -29,8 +45,9 @@ const AudioCapture: React.FC<AudioCaptureProps> = () => {
         setAudioStream(stream);
 
         const recorder = new MediaRecorder(stream, {
-          mimeType: "audio/mp4;codecs=mp4a.40.2", // Use the MP4 container with AAC codec
+          mimeType: mimeType,
         });
+
         setAudioRecorder(recorder);
 
         const socket = new WebSocket("ws://localhost:8080/ws");
