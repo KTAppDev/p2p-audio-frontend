@@ -36,14 +36,22 @@ const AudioCapture: React.FC<AudioCaptureProps> = () => {
 
         const socket = new WebSocket("ws://localhost:8080/ws");
         setWs(socket);
-        console.log(stream);
 
         recorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
             // Send audio data over WebSocket
+            console.log(event.data);
             socket.send(event.data);
           }
         };
+
+        // Additional code to send a steady stream at a regular interval
+        const sendDataInterval = setInterval(() => {
+          // Check if recorder is active before sending data
+          if (recorder.state === "recording") {
+            recorder.requestData(); // Trigger ondataavailable event
+          }
+        }, 1000); // Adjust the interval (in milliseconds) as needed
       } catch (error) {
         console.error("Error accessing microphone:", error);
       }
@@ -51,7 +59,6 @@ const AudioCapture: React.FC<AudioCaptureProps> = () => {
 
     initAudio();
 
-    // Cleanup function (e.g., when the component unmounts)
     return () => {
       if (audioStream) {
         audioStream.getTracks().forEach((track) => track.stop());
@@ -65,7 +72,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = () => {
         ws.close();
       }
     };
-  }, [audioStream, audioRecorder, ws]);
+  }, []);
 
   const startCapture = () => {
     if (audioRecorder) {
