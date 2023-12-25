@@ -22,11 +22,28 @@ switch (getBrowser()) {
   case "Chrome":
     mimeType = "audio/webm; codecs=opus";
     break;
-  // case "Safari":
-  //   mimeType = "audio/mp4; codecs=mp4a.40.2";
-  //   break;
+  case "Safari":
+    mimeType = "";
+    break;
   default:
     mimeType = "audio/webm; codecs=opus"; // Default to Opus
+}
+// navigator.mediaDevices.getUserMedia;
+// this just shows various available input devices
+try {
+  navigator.mediaDevices
+    .enumerateDevices()
+    .then((devices) => {
+      const audioDevices = devices.filter(
+        (device) => device.kind === "audioinput",
+      );
+      console.log("Available audio input devices:", audioDevices);
+    })
+    .catch((error) => {
+      console.error("Error enumerating devices:", error);
+    });
+} catch (error) {
+  console.log(error);
 }
 
 const AudioCapture: React.FC<AudioCaptureProps> = () => {
@@ -41,11 +58,13 @@ const AudioCapture: React.FC<AudioCaptureProps> = () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
+          video: false,
         });
         setAudioStream(stream);
 
         const recorder = new MediaRecorder(stream, {
           mimeType: mimeType,
+          bitsPerSecond: 64000,
         });
 
         setAudioRecorder(recorder);
@@ -55,14 +74,35 @@ const AudioCapture: React.FC<AudioCaptureProps> = () => {
 
         recorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
-            // Send audio data over WebSocket
-            console.log(event.data);
-            socket.send(event.data);
+            // Convert Blob to ArrayBuffer
+            let fileReader = new FileReader();
+
+            fileReader.onloadend = () => {
+              // Create a metadata object
+              let metadata = {
+                mimeType: "audio/webm; codecs=opus", // Replace with the actual MIME type
+              };
+
+              // Convert ArrayBuffer to Uint8Array
+              let uint8Array = new Uint8Array(fileReader.result as ArrayBuffer);
+
+              // Send the metadata and raw audio data directly over WebSocket
+              let data = {
+                metadata: metadata,
+                audioData: Array.from(uint8Array), // Convert Uint8Array to an array of numbers
+              };
+
+              // Send the JSON data over WebSocket
+              console.log("Sending audio data...", data);
+              socket.send(JSON.stringify(data));
+            };
+
+            fileReader.readAsArrayBuffer(event.data);
           }
         };
 
         // Additional code to send a steady stream at a regular interval
-        const sendDataInterval = setInterval(() => {
+        setInterval(() => {
           // Check if recorder is active before sending data
           if (recorder.state === "recording") {
             recorder.requestData(); // Trigger ondataavailable event
