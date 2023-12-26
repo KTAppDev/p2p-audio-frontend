@@ -30,21 +30,21 @@ switch (getBrowser()) {
 }
 // navigator.mediaDevices.getUserMedia;
 // this just shows various available input devices
-try {
-  navigator.mediaDevices
-    .enumerateDevices()
-    .then((devices) => {
-      const audioDevices = devices.filter(
-        (device) => device.kind === "audioinput",
-      );
-      console.log("Available audio input devices:", audioDevices);
-    })
-    .catch((error) => {
-      console.error("Error enumerating devices:", error);
-    });
-} catch (error) {
-  console.log(error);
-}
+// try {
+//   navigator.mediaDevices
+//     .enumerateDevices()
+//     .then((devices) => {
+//       const audioDevices = devices.filter(
+//         (device) => device.kind === "audioinput",
+//       );
+//       console.log("Available audio input devices:", audioDevices);
+//     })
+//     .catch((error) => {
+//       console.error("Error enumerating devices:", error);
+//     });
+// } catch (error) {
+//   console.log(error);
+// }
 
 const AudioCapture: React.FC<AudioCaptureProps> = () => {
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
@@ -63,8 +63,8 @@ const AudioCapture: React.FC<AudioCaptureProps> = () => {
         setAudioStream(stream);
 
         const recorder = new MediaRecorder(stream, {
-          mimeType: mimeType,
-          bitsPerSecond: 64000,
+          // mimeType: mimeType,
+          audioBitsPerSecond: 64000,
         });
 
         setAudioRecorder(recorder);
@@ -80,7 +80,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = () => {
             fileReader.onloadend = () => {
               // Create a metadata object
               let metadata = {
-                mimeType: "audio/webm; codecs=opus", // Replace with the actual MIME type
+                mimeType: mimeType,
               };
 
               // Convert ArrayBuffer to Uint8Array
@@ -88,7 +88,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = () => {
 
               // Send the metadata and raw audio data directly over WebSocket
               let data = {
-                metadata: metadata,
+                // metadata: metadata,
                 audioData: Array.from(uint8Array), // Convert Uint8Array to an array of numbers
               };
 
